@@ -391,6 +391,13 @@ static bool dr_ste_v1_is_match_ste(uint16_t lu_type)
 	return ((lu_type >> 8) == DR_STE_V1_TYPE_MATCH);
 }
 
+static uint64_t dr_ste_v1_get_hit_addr(uint8_t *hw_ste_p)
+{
+	uint64_t index = DR_STE_GET(match_bwc_v1, hw_ste_p, next_table_base_31_5_size) |
+			DR_STE_GET(match_bwc_v1, hw_ste_p, next_table_base_39_32_size) << 27;
+	return index;
+}
+
 static void dr_ste_v1_init(uint8_t *hw_ste_p, uint16_t lu_type,
 			   bool is_rx, uint16_t gvmi)
 {
@@ -3589,6 +3596,7 @@ static struct dr_ste_ctx ste_ctx_v1 = {
 	.set_miss_addr			= &dr_ste_v1_set_miss_addr,
 	.get_miss_addr			= &dr_ste_v1_get_miss_addr,
 	.set_hit_addr			= &dr_ste_v1_set_hit_addr,
+	.get_hit_addr 			= &dr_ste_v1_get_hit_addr,
 	.set_byte_mask			= &dr_ste_v1_set_byte_mask,
 	.get_byte_mask			= &dr_ste_v1_get_byte_mask,
 	.set_ctrl_always_hit_htbl	= &dr_ste_v1_set_ctrl_always_hit_htbl,

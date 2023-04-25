@@ -1064,6 +1064,7 @@ struct mlx5dv_dr_domain {
 	struct dr_domain_info		info;
 	struct list_head		tbl_list;
 	uint32_t			flags;
+	int				spinlock;
 	/* protect debug lists of all tracked objects */
 	pthread_spinlock_t		debug_lock;
 	/* statistcs */
@@ -1671,6 +1672,8 @@ int dr_send_ring_alloc(struct mlx5dv_dr_domain *dmn);
 void dr_send_ring_free(struct mlx5dv_dr_domain *dmn);
 int dr_send_ring_force_drain(struct mlx5dv_dr_domain *dmn);
 bool dr_send_allow_fl(struct dr_devx_caps *caps);
+int dr_postsend_icm_data_unlocked(struct mlx5dv_dr_domain *dmn,
+				  struct postsend_info *send_info, int ring_idx);
 int dr_send_postsend_ste(struct mlx5dv_dr_domain *dmn, struct dr_ste *ste,
 			 uint8_t *data, uint16_t size, uint16_t offset,
 			 uint8_t ring_idx);

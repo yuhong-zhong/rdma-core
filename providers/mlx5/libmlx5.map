@@ -105,6 +105,9 @@ MLX5_1.10 {
 		mlx5dv_dr_table_create;
 		mlx5dv_dr_table_destroy;
 		mlx5dv_qp_ex_from_ibv_qp_ex;
+		switch_qp_action;
+		postsend_lock;
+		postsend_unlock;
 } MLX5_1.9;
 
 MLX5_1.11 {

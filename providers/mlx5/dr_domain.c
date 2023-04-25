@@ -307,9 +307,9 @@ static int dr_domain_caps_init(struct ibv_context *ctx,
 	/* Non FDB type is supported over root table or when we can enable
 	 * force-loopback.
 	 */
-	if ((dmn->type != MLX5DV_DR_DOMAIN_TYPE_FDB) &&
-	    !dr_send_allow_fl(&dmn->info.caps))
-		return 0;
+//	if ((dmn->type != MLX5DV_DR_DOMAIN_TYPE_FDB) &&
+//	    !dr_send_allow_fl(&dmn->info.caps))
+//		return 0;
 
 	ret = dr_domain_vports_init(dmn);
 	if (ret)
@@ -470,6 +470,7 @@ mlx5dv_dr_domain_create(struct ibv_context *ctx,
 	dmn->type = type;
 	atomic_init(&dmn->refcount, 1);
 	list_head_init(&dmn->tbl_list);
+	dmn->spinlock = 0;
 
 	ret = pthread_spin_init(&dmn->debug_lock, PTHREAD_PROCESS_PRIVATE);
 	if (ret) {

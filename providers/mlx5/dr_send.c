@@ -39,7 +39,7 @@
 
 #define QUEUE_SIZE		128
 #define SIGNAL_PER_DIV_QUEUE	16
-#define TH_NUMS_TO_DRAIN	2
+#define TH_NUMS_TO_DRAIN	16
 
 enum {
 	CQ_OK = 0,
@@ -747,7 +747,7 @@ static void dr_fill_data_segs(struct mlx5dv_dr_domain *dmn,
 		dr_fill_write_args_segs(send_ring, send_info);
 }
 
-static int dr_postsend_icm_data(struct mlx5dv_dr_domain *dmn,
+int dr_postsend_icm_data_unlocked(struct mlx5dv_dr_domain *dmn,
 				struct postsend_info *send_info,
 				int ring_idx)
 {
@@ -765,6 +765,31 @@ static int dr_postsend_icm_data(struct mlx5dv_dr_domain *dmn,
 
 out_unlock:
 	pthread_spin_unlock(&send_ring->lock);
+	return ret;
+}
+
+void postsend_lock(struct mlx5dv_dr_domain *dmn)
+{
+	while (__sync_lock_test_and_set(&dmn->spinlock, 1)) {
+		while (dmn->spinlock)
+			asm volatile("pause");
+	}
+}
+
+void postsend_unlock(struct mlx5dv_dr_domain *dmn)
+{
+	__sync_lock_release(&dmn->spinlock);
+}
+
+static int dr_postsend_icm_data(struct mlx5dv_dr_domain *dmn,
+				struct postsend_info *send_info, int ring_idx)
+{
+	int ret;
+
+	postsend_lock(dmn);
+	ret = dr_postsend_icm_data_unlocked(dmn, send_info, ring_idx);
+	postsend_unlock(dmn);
+
 	return ret;
 }
 

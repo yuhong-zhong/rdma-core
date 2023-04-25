@@ -1999,6 +1999,13 @@ mlx5dv_dr_rule_create(struct mlx5dv_dr_matcher *matcher,
 		      size_t num_actions,
 		      struct mlx5dv_dr_action *actions[]);
 
+
+void postsend_lock(struct mlx5dv_dr_domain *dmn);
+void postsend_unlock(struct mlx5dv_dr_domain *dmn);
+int switch_qp_action(struct mlx5dv_dr_rule *rule,
+	struct mlx5dv_dr_domain *dmn,
+	struct ibv_qp *nqp, struct ibv_qp *pqp);
+
 int mlx5dv_dr_rule_destroy(struct mlx5dv_dr_rule *rule);
 
 enum mlx5dv_dr_action_flags {

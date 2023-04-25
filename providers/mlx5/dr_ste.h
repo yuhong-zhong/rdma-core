@@ -208,6 +208,7 @@ struct dr_ste_ctx {
 	void (*set_miss_addr)(uint8_t *hw_ste_p, uint64_t miss_addr);
 	uint64_t (*get_miss_addr)(uint8_t *hw_ste_p);
 	void (*set_hit_addr)(uint8_t *hw_ste_p, uint64_t icm_addr, uint32_t ht_size);
+	uint64_t (*get_hit_addr)(uint8_t *hw_ste_p);
 	void (*set_byte_mask)(uint8_t *hw_ste_p, uint16_t byte_mask);
 	uint16_t (*get_byte_mask)(uint8_t *hw_ste_p);
 	void (*set_ctrl_always_hit_htbl)(uint8_t *hw_ste, uint16_t byte_mask,

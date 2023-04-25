@@ -48,6 +48,37 @@ struct mlx5_vfio_mr {
 	uint64_t iova_reg_size;
 };
 
+extern int mlx5_vfio_query_device_ex(struct ibv_context *context,
+			 const struct ibv_query_device_ex_input *input,
+			 struct ibv_device_attr_ex *attr,
+			 size_t attr_size);
+extern int mlx5_vfio_query_port(struct ibv_context *context, uint8_t port,
+		     struct ibv_port_attr *attr);
+
+struct mlx5_vfio_context;
+extern int mlx5_vfio_dm_init(struct mlx5_vfio_context *ctx);
+extern struct ibv_dm *mlx5_vfio_alloc_dm(struct ibv_context *ibctx,
+				   struct ibv_alloc_dm_attr *dm_attr,
+				   struct mlx5dv_alloc_dm_attr *mlx5_dm_attr);
+extern int mlx5_vfio_get_caps(struct mlx5_vfio_context *ctx, enum mlx5_cap_type cap_type);
+extern int mlx5_vfio_cmd_exec(struct mlx5_vfio_context *ctx, void *in,
+			       int ilen, void *out, int olen,
+			       unsigned int slot);
+extern struct ibv_mr *mlx5_vfio_reg_dm_mr(struct ibv_pd *pd, struct ibv_dm *ibdm,
+			      uint64_t dm_offset, size_t length,
+			      unsigned int acc);
+
+extern struct ibv_cq *mlx5_vfio_create_cq(struct ibv_context *ibctx, int cqe,
+			     struct ibv_comp_channel *channel,
+			     int comp_vector);
+
+struct mlx5_vfio_cq {
+	struct mlx5dv_cq cq;
+	struct mlx5dv_devx_umem *mem_reg;
+	struct ibv_cq cq_handle;
+	struct mlx5dv_devx_obj *obj;
+};
+
 struct mlx5_vfio_devx_umem {
 	struct mlx5dv_devx_umem dv_devx_umem;
 	struct ibv_context *context;
@@ -90,6 +121,34 @@ struct mlx5_vfio_device {
 
 #define MLX5_VFIO_CAP_ROCE_MAX(ctx, cap) \
 	DEVX_GET(roce_cap, ctx->caps.hca_max[MLX5_CAP_ROCE], cap)
+
+#define MLX5_VFIO_CAP_DEV_MEM(ctx, cap)\
+	DEVX_GET(device_mem_cap, ctx->caps.hca_cur[MLX5_CAP_DEV_MEM], cap)
+
+#define MLX5_VFIO_CAP64_DEV_MEM(ctx, cap)\
+	DEVX_GET64(device_mem_cap, ctx->caps.hca_cur[MLX5_CAP_DEV_MEM], cap)
+
+
+#define MLX5_VFIO_CAP_FLOWTABLE(mdev, cap) \
+    DEVX_GET(flow_table_nic_cap, mdev->caps.hca_cur[MLX5_CAP_FLOW_TABLE], cap)
+
+#define MLX5_VFIO_CAP64_FLOWTABLE(mdev, cap) \
+	DEVX_GET64(flow_table_nic_cap, (mdev)->caps.hca_cur[MLX5_CAP_FLOW_TABLE], cap)
+
+#define MLX5_VFIO_CAP_FLOWTABLE_MAX(mdev, cap) \
+    DEVX_GET(flow_table_nic_cap, mdev->caps.hca_max[MLX5_CAP_FLOW_TABLE], cap)
+
+#define MLX5_VFIO_CAP_FLOWTABLE_NIC_RX(mdev, cap) \
+	MLX5_VFIO_CAP_FLOWTABLE(mdev, flow_table_properties_nic_receive.cap)
+
+#define MLX5_VFIO_CAP_FLOWTABLE_NIC_RX_MAX(mdev, cap) \
+	MLX5_VFIO_CAP_FLOWTABLE_MAX(mdev, flow_table_properties_nic_receive.cap)
+
+#define MLX5_VFIO_CAP_FLOWTABLE_NIC_TX(mdev, cap) \
+	MLX5_VFIO_CAP_FLOWTABLE(mdev, flow_table_properties_nic_transmit.cap)
+
+#define MLX5_VFIO_CAP_FLOWTABLE_NIC_TX_MAX(mdev, cap) \
+	MLX5_VFIO_CAP_FLOWTABLE_MAX(mdev, flow_table_properties_nic_transmit.cap)
 
 struct mlx5_vfio_context;
 
@@ -279,6 +338,15 @@ struct mlx5_vfio_health_state {
 	uint32_t miss_counter;
 };
 
+
+struct mlx5_dm_internal {
+	/* protect access to icm bitmask */
+	pthread_mutex_t lock;
+	unsigned long *steering_sw_icm_alloc_blocks;
+	unsigned long *header_modify_sw_icm_alloc_blocks;
+	unsigned long *header_modify_pattern_sw_icm_alloc_blocks;
+};
+
 struct mlx5_vfio_context {
 	struct verbs_context vctx;
 	int container_fd;
@@ -304,6 +372,7 @@ struct mlx5_vfio_context {
 	struct mlx5_dv_context_ops *dv_ctx_ops;
 	int *msix_fds;
 	pthread_mutex_t msix_fds_lock;
+	struct mlx5_dm_internal dm;
 };
 
 #define MLX5_MAX_DESTROY_INBOX_SIZE_DW	DEVX_ST_SZ_DW(delete_fte_in)

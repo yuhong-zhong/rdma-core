@@ -27,6 +27,12 @@ unsigned long bitmap_find_free_region(unsigned long *bmp,
 				      unsigned long nbits,
 				      unsigned long region_size);
 
+
+unsigned long bitmap_find_free_region_start(unsigned long *bmp,
+					  unsigned long start,
+				      unsigned long nbits,
+				      unsigned long region_size);
+
 static inline void bitmap_fill(unsigned long *bmp, unsigned long nbits)
 {
 	unsigned long size = BITS_TO_LONGS(nbits) * sizeof(unsigned long);

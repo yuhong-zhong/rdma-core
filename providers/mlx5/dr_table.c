@@ -163,6 +163,11 @@ static int dr_table_create_devx_tbl(struct mlx5dv_dr_table *tbl)
 	return 0;
 }
 
+uint32_t mlx5dv_dr_table_get_id(struct mlx5dv_dr_table *tbl)
+{
+	return tbl->devx_obj->object_id;
+}
+
 struct mlx5dv_dr_table *mlx5dv_dr_table_create(struct mlx5dv_dr_domain *dmn,
 					     uint32_t level)
 {

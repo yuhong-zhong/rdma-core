@@ -276,11 +276,18 @@ static bool dr_domain_caps_is_sw_owner_supported(bool sw_owner,
 static int dr_domain_caps_init(struct ibv_context *ctx,
 			       struct mlx5dv_dr_domain *dmn)
 {
+	struct ibv_device_attr_ex attr;
 	struct ibv_port_attr port_attr = {};
 	int ret;
 
 	dmn->info.caps.dmn = dmn;
 
+	/*
+	 * vfio driver includes limited support for ibv_query_port and
+	 * ibv_query_device_ex. extract only the supported fields here. if other
+	 * fields are needed in the future, the vfio driver must add support for
+	 * them.
+	 */
 	ret = ibv_query_port(ctx, 1, &port_attr);
 	if (ret) {
 		dr_dbg(dmn, "Failed to query port\n");
@@ -293,9 +300,12 @@ static int dr_domain_caps_init(struct ibv_context *ctx,
 		return errno;
 	}
 
-	ret = ibv_query_device_ex(ctx, NULL, &dmn->info.attr);
+	ret = ibv_query_device_ex(ctx, NULL, &attr);
 	if (ret)
 		return ret;
+	dmn->info.attr.phys_port_cnt_ex = attr.phys_port_cnt_ex;
+	memcpy(dmn->info.attr.orig_attr.fw_ver, attr.orig_attr.fw_ver,
+		sizeof(attr.orig_attr.fw_ver));
 
 	ret = dr_devx_query_device(ctx, &dmn->info.caps);
 	if (ret)

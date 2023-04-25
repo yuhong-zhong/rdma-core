@@ -238,4 +238,5 @@ MLX5_1.24 {
 		mlx5_vfio_deliver_event;
 		mlx5_vfio_get_clock;
 		mlx5_access_reg;
+		mlx5dv_dr_table_get_id;
 } MLX5_1.23;

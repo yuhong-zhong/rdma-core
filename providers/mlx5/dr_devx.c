@@ -996,6 +996,10 @@ struct mlx5dv_devx_obj *dr_devx_create_qp(struct ibv_context *ctx,
 	DEVX_SET(qpc, qpc, isolate_vl_tc, attr->isolate_vl_tc);
 	DEVX_SET(qpc, qpc, ts_format, attr->qp_ts_format);
 
+	// Kernel driver sets these for us, but we need to do it for VFIO mode.
+	DEVX_SET(qpc, qpc, dbr_umem_valid, 1);
+	DEVX_SET(create_qp_in, in, wq_umem_valid, 1);
+
 	DEVX_SET(create_qp_in, in, wq_umem_id, attr->buff_umem_id);
 
 	obj = mlx5dv_devx_obj_create(ctx, in, sizeof(in), out, sizeof(out));

@@ -162,3 +162,23 @@ unsigned long bitmap_find_free_region(unsigned long *bmp,
 	return nbits;
 }
 
+unsigned long bitmap_find_free_region_start(unsigned long *bmp,
+					  unsigned long start,
+				      unsigned long nbits,
+				      unsigned long region_size)
+{
+	if (!region_size)
+		return 0;
+
+	for (; start + region_size <= nbits; start++) {
+		if (bitmap_test_bit(bmp, start))
+			continue;
+
+		if (bitmap_is_free_region(bmp, start, region_size))
+			return start;
+	}
+
+	return nbits;
+}
+
+

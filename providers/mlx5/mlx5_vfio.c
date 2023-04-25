@@ -785,7 +785,7 @@ end:
 	return err;
 }
 
-static int mlx5_vfio_cmd_exec(struct mlx5_vfio_context *ctx, void *in,
+int mlx5_vfio_cmd_exec(struct mlx5_vfio_context *ctx, void *in,
 			       int ilen, void *out, int olen,
 			       unsigned int slot)
 {
@@ -1877,7 +1877,7 @@ static int mlx5_vfio_nic_vport_update_roce_state(struct mlx5_vfio_context *ctx,
 	return err;
 }
 
-static int mlx5_vfio_get_caps(struct mlx5_vfio_context *ctx, enum mlx5_cap_type cap_type)
+int mlx5_vfio_get_caps(struct mlx5_vfio_context *ctx, enum mlx5_cap_type cap_type)
 {
 	int ret;
 
@@ -2782,13 +2782,23 @@ static int vfio_init_obj(struct mlx5dv_obj *obj, uint64_t obj_type)
 {
 	struct ibv_pd *pd_in = obj->pd.in;
 	struct mlx5dv_pd *pd_out = obj->pd.out;
-	struct mlx5_pd *mpd = to_mpd(pd_in);
+	struct mlx5_pd *mpd;
 
-	if (obj_type != MLX5DV_OBJ_PD)
+	if (obj_type & MLX5DV_OBJ_CQ) {
+		*obj->cq.out = container_of(obj->cq.in, struct mlx5_vfio_cq, cq_handle)->cq;
+		obj_type &= ~MLX5DV_OBJ_CQ;
+	}
+
+	if (obj_type & MLX5DV_OBJ_PD) {
+		mpd = to_mpd(pd_in);
+		pd_out->comp_mask = 0;
+		pd_out->pdn = mpd->pdn;
+		obj_type &= ~MLX5DV_OBJ_PD;
+	}
+
+	if (obj_type)
 		return EOPNOTSUPP;
 
-	pd_out->comp_mask = 0;
-	pd_out->pdn = mpd->pdn;
 	return 0;
 }
 
@@ -3139,6 +3149,8 @@ vfio_devx_obj_create(struct ibv_context *context, const void *in,
 	struct mlx5_vfio_context *ctx = to_mvfio_ctx(context);
 	struct mlx5_devx_obj *obj;
 	int ret;
+	uint16_t opcode;
+	uint64_t rx_icm_addr;
 
 	if (!devx_is_obj_create_cmd(in)) {
 		errno = EINVAL;
@@ -3160,6 +3172,15 @@ vfio_devx_obj_create(struct ibv_context *context, const void *in,
 	devx_obj_build_destroy_cmd(in, out, obj->dinbox,
 				   &obj->dinlen, &obj->dv_obj);
 	obj->dv_obj.context = context;
+
+	opcode = DEVX_GET(general_obj_in_cmd_hdr, in, opcode);
+	if (opcode == MLX5_CMD_OP_CREATE_TIR) {
+		rx_icm_addr = DEVX_GET(create_tir_out, out, icm_address_31_0);
+		rx_icm_addr |= (uint64_t)DEVX_GET(create_tir_out, out, icm_address_39_32) << 32;
+		rx_icm_addr |= (uint64_t)DEVX_GET(create_tir_out, out, icm_address_63_40) << 40;
+		obj->dv_obj.rx_icm_addr = rx_icm_addr;
+		obj->dv_obj.type = MLX5_DEVX_TIR;
+	}
 
 	return &obj->dv_obj;
 fail:
@@ -3409,6 +3430,7 @@ static struct mlx5_dv_context_ops mlx5_vfio_dv_ctx_ops = {
 	.devx_free_msi_vector = vfio_devx_free_msi_vector,
 	.devx_create_eq = vfio_devx_create_eq,
 	.devx_destroy_eq = vfio_devx_destroy_eq,
+	.alloc_dm = mlx5_vfio_alloc_dm,
 };
 
 static void mlx5_vfio_uninit_context(struct mlx5_vfio_context *ctx)
@@ -3438,6 +3460,10 @@ static const struct verbs_context_ops mlx5_vfio_common_ops = {
 	.reg_mr = mlx5_vfio_reg_mr,
 	.dereg_mr = mlx5_vfio_dereg_mr,
 	.free_context = mlx5_vfio_free_context,
+	.create_cq = mlx5_vfio_create_cq,
+	.reg_dm_mr = mlx5_vfio_reg_dm_mr,
+	.query_device_ex = mlx5_vfio_query_device_ex,
+	.query_port = mlx5_vfio_query_port,
 };
 
 static struct verbs_context *
@@ -3471,6 +3497,9 @@ mlx5_vfio_alloc_context(struct ibv_device *ibdev,
 
 	if (mlx5_vfio_setup_function(mctx))
 		goto clean_cmd;
+
+	if (mlx5_vfio_dm_init(mctx))
+		mlx5_vfio_dv_ctx_ops.alloc_dm = NULL;
 
 	if (create_async_eqs(mctx))
 		goto func_teardown;

@@ -1038,7 +1038,12 @@ struct dr_domain_info {
 	uint32_t		max_send_size;
 	struct dr_domain_rx_tx	rx;
 	struct dr_domain_rx_tx	tx;
-	struct ibv_device_attr_ex attr;
+	struct {
+		struct {
+			char fw_ver[64];
+		} orig_attr;
+		uint32_t phys_port_cnt_ex;
+	} attr;
 	struct dr_devx_caps	caps;
 	bool			use_mqs;
 };

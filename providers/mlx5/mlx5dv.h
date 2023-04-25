@@ -1710,6 +1710,20 @@ int mlx5dv_vfio_get_events_fd(struct ibv_context *ibctx);
  */
 int mlx5dv_vfio_process_events(struct ibv_context *context);
 
+
+struct mlx5_cmd_layout;
+extern int mlx5_vfio_deliver_event(struct ibv_context *ibctx, unsigned int slot);
+extern int mlx5_vfio_cmd_slot_alloc(struct ibv_context *ibctx, uint32_t *slot_out, struct mlx5_cmd_layout **cmd_lay_out);
+extern int mlx5_vfio_get_clock(struct ibv_context *ibctx, unsigned int *frequency_khz, void **core_clock);
+extern int mlx5_vfio_post_cmd_fast(struct ibv_context *ibctx, void *in,
+			      int ilen, int olen,
+			      unsigned int slot);
+extern void mlx5_vfio_post_cmd_db(struct ibv_context *ibctx, unsigned int vector);
+extern void export_fd(struct ibv_context *ibctx, int *fdout, off_t *offout, size_t *szout);
+extern int mlx5_access_reg(struct ibv_context *ibctx, void *data_in,
+				int size_in, void *data_out, int size_out,
+				uint16_t reg_id, int arg, int write);
+
 struct ibv_context *
 mlx5dv_open_device(struct ibv_device *device, struct mlx5dv_context_attr *attr);
 

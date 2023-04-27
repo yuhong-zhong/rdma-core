@@ -2219,6 +2219,7 @@ struct mlx5dv_devx_msi_vector {
 };
 
 extern uint32_t mlx5dv_dr_table_get_id(struct mlx5dv_dr_table *tbl);
+extern uint32_t mlx5_devx_get_obj_id(struct mlx5dv_devx_obj *obj);
 
 struct mlx5dv_devx_msi_vector *
 mlx5dv_devx_alloc_msi_vector(struct ibv_context *ibctx);

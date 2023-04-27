@@ -247,6 +247,11 @@ int mlx5_cmd_status_to_err(uint8_t status)
 	}
 }
 
+uint32_t mlx5_devx_get_obj_id(struct mlx5dv_devx_obj *obj)
+{
+	return obj->object_id;
+}
+
 int mlx5_get_cmd_status_err(int err, void *out)
 {
 	if (err == EREMOTEIO)

@@ -1939,6 +1939,8 @@ static int handle_hca_cap(struct mlx5_vfio_context *ctx, void *set_ctx, int set_
 		DEVX_SET(cmd_hca_cap, set_hca_cap, disable_link_up_by_init_hca, 1);
 
 	DEVX_SET(cmd_hca_cap, set_hca_cap, log_uar_page_sz, sys_page_shift - 12);
+	DEVX_SET(cmd_hca_cap, set_hca_cap, log_max_qp, MLX5_VFIO_CAP_GEN_MAX(ctx, log_max_qp));
+	DEVX_SET(cmd_hca_cap, set_hca_cap, log_max_cq, MLX5_VFIO_CAP_GEN_MAX(ctx, log_max_cq));
 
 	if (MLX5_VFIO_CAP_GEN_MAX(ctx, mkey_by_name))
 		DEVX_SET(cmd_hca_cap, set_hca_cap, mkey_by_name, 1);

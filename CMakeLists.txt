@@ -184,7 +184,7 @@ include(RDMA_BuildType)
 include(RDMA_DoFixup)
 include(publish_headers)
 include(rdma_functions)
-include(pyverbs_functions)
+# include(pyverbs_functions)
 if (NO_MAN_PAGES)
   # define empty stub functions to omit man page processing
   function(rdma_man_pages)
@@ -740,8 +740,8 @@ add_subdirectory(infiniband-diags/scripts)
 add_subdirectory(infiniband-diags/man)
 
 if (CYTHON_EXECUTABLE)
-  add_subdirectory(pyverbs)
-  add_subdirectory(tests)
+#   add_subdirectory(pyverbs)
+#   add_subdirectory(tests)
 endif()
 
 # Binaries
